@@ -1,35 +1,45 @@
 import type { CollectionConfig } from 'payload'
+import { isAdmin, isAdminOrSalesAgent } from '../access/roles'
 
 export const Appointments: CollectionConfig = {
   slug: 'appointments',
   admin: {
     useAsTitle: 'patientName',
-    group: 'Randevu Yönetimi',
+    defaultColumns: ['patientName', 'doctor', 'appointmentDate', 'status'],
+    group: 'Appointment Management',
+    description: 'Quick appointment overview (operational data lives in Spring Boot)',
+  },
+  access: {
+    read: isAdminOrSalesAgent,
+    create: isAdminOrSalesAgent,
+    update: isAdminOrSalesAgent,
+    delete: isAdmin,
   },
   fields: [
-    { name: 'patientName', type: 'text', required: true, label: 'Hasta Adı' },
-    { name: 'patientEmail', type: 'email', required: true, label: 'E-posta' },
-    { name: 'patientPhone', type: 'text', required: true, label: 'Telefon' },
-    { name: 'doctor', type: 'relationship', relationTo: 'doctors', required: true, label: 'Doktor' },
-    { 
-      name: 'appointmentDate', 
-      type: 'date', 
-      required: true, 
-      label: 'Tarih',
-      admin: { date: { pickerAppearance: 'dayAndTime' } }
+    { name: 'patientName', type: 'text', required: true, label: 'Patient Name' },
+    { name: 'patientEmail', type: 'email', required: true, label: 'Email' },
+    { name: 'patientPhone', type: 'text', required: true, label: 'Phone' },
+    { name: 'doctor', type: 'relationship', relationTo: 'doctor-profiles', required: true, label: 'Doctor' },
+    {
+      name: 'appointmentDate',
+      type: 'date',
+      required: true,
+      label: 'Date & Time',
+      admin: { date: { pickerAppearance: 'dayAndTime' } },
     },
     {
       name: 'status',
       type: 'select',
       defaultValue: 'PENDING',
-      label: 'Durum',
+      label: 'Status',
       options: [
-        { label: 'Beklemede', value: 'PENDING' },
-        { label: 'Onaylandı', value: 'CONFIRMED' },
-        { label: 'Tamamlandı', value: 'COMPLETED' },
-        { label: 'İptal', value: 'CANCELLED' },
+        { label: 'Pending', value: 'PENDING' },
+        { label: 'Confirmed', value: 'CONFIRMED' },
+        { label: 'Completed', value: 'COMPLETED' },
+        { label: 'Cancelled', value: 'CANCELLED' },
       ],
+      admin: { position: 'sidebar' },
     },
-    { name: 'notes', type: 'textarea', label: 'Notlar' },
+    { name: 'notes', type: 'textarea', label: 'Notes' },
   ],
 }

@@ -1,0 +1,102 @@
+/* src/app/(payload)/custom.scss */
+/* HealthVia Admin Panel — Custom Theme */
+/* Navy: #1a2b4b  Orange: #f97316 */
+
+/* ===== LIGHT THEME ===== */
+
+:root {
+  --theme-success-500: #f97316;
+  --theme-success-400: #fb923c;
+}
+
+/* Primary buttons → Orange */
+.btn--style-primary,
+.btn--style-primary:focus {
+  background-color: #f97316 !important;
+  border-color: #f97316 !important;
+  color: #fff !important;
+}
+
+.btn--style-primary:hover {
+  background-color: #ea580c !important;
+  border-color: #ea580c !important;
+}
+
+/* Pill buttons */
+.btn--style-pill {
+  background-color: #f97316 !important;
+  color: #fff !important;
+}
+
+.btn--style-pill:hover {
+  background-color: #ea580c !important;
+}
+
+/* Focus rings */
+*:focus-visible {
+  outline-color: #f97316 !important;
+}
+
+/* Checkbox / toggle */
+.checkbox-input:checked,
+.toggle-input:checked {
+  background-color: #f97316 !important;
+  border-color: #f97316 !important;
+}
+
+/* Step nav breadcrumb — active */
+.step-nav a:last-child {
+  color: #f97316 !important;
+}
+
+/* Dashboard group headings */
+.dashboard__group h2,
+.dashboard__group .group-label {
+  color: #f97316 !important;
+}
+
+/* Card hover */
+.card:hover {
+  border-color: #f97316 !important;
+}
+
+/* Table row hover */
+.row:hover td {
+  background-color: rgba(249, 115, 22, 0.04) !important;
+}
+
+/* Status pill */
+.pill--style-success {
+  background-color: #f97316 !important;
+}
+
+/* ===== DARK THEME FIXES ===== */
+
+[data-theme="dark"] {
+  --theme-success-500: #f97316;
+  --theme-success-400: #fb923c;
+}
+
+[data-theme="dark"] .btn--style-primary {
+  background-color: #f97316 !important;
+  border-color: #f97316 !important;
+}
+
+[data-theme="dark"] .btn--style-primary:hover {
+  background-color: #ea580c !important;
+}
+
+/* ===== SCROLLBAR ===== */
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #475569;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #64748b;
+}

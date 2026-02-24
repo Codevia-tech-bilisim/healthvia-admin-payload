@@ -5,7 +5,7 @@ export const Users: CollectionConfig = {
   auth: true,
   admin: {
     useAsTitle: 'email',
-    group: 'Kullanıcı Yönetimi',
+    group: 'User Management',
   },
   fields: [
     { name: 'firstName', type: 'text', required: true, label: 'Ad' },
