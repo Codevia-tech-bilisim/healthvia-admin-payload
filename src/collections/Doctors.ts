@@ -1,183 +1,172 @@
 import type { CollectionConfig } from 'payload'
-import { isAdmin, isAdminOrSalesAgent, publishedOnly } from '../access/roles'
-import { slugField } from '../fields/slugField'
-import { seoFields } from '../fields/seoFields'
+import { isAdmin, isAdminOrSalesAgent } from '../access/roles'
 
 export const Doctors: CollectionConfig = {
   slug: 'doctor-profiles',
   admin: {
     useAsTitle: 'fullName',
-    defaultColumns: ['fullName', 'title', 'specialty', 'hospital', 'isActive'],
-    group: 'Doctor Management',
-    description: 'Doctor profiles displayed on the patient-facing website',
+    defaultColumns: ['fullName', 'title', 'primarySpecialty', 'hospitalName', 'backendDoctorId', 'isActive'],
+    group: 'Healthcare',
   },
-  versions: { drafts: true },
   access: {
-    read: publishedOnly,
+    read: () => true,
     create: isAdminOrSalesAgent,
     update: isAdminOrSalesAgent,
     delete: isAdmin,
   },
-  fields: [
-    // === IDENTITY ===
-    {
-      name: 'title',
-      type: 'select',
-      required: true,
-      label: 'Title',
-      options: [
-        { label: 'Prof. Dr.', value: 'prof-dr' },
-        { label: 'Doç. Dr.', value: 'doc-dr' },
-        { label: 'Op. Dr.', value: 'op-dr' },
-        { label: 'Uzm. Dr.', value: 'uzm-dr' },
-        { label: 'Dr.', value: 'dr' },
-      ],
-      admin: { position: 'sidebar' },
-    },
-    { name: 'fullName', type: 'text', required: true, label: 'Full Name' },
-    slugField('fullName'),
-    { name: 'email', type: 'email', required: true, label: 'Email' },
-    { name: 'phone', type: 'text', label: 'Phone' },
+  hooks: {
+    beforeChange: [
+      async ({ data, operation }) => {
+        if (operation === 'create' && data.password && !data.backendDoctorId) {
+          try {
+            const nameParts = data.fullName.trim().split(' ')
+            const firstName = nameParts[0]
+            const lastName = nameParts.slice(1).join(' ') || nameParts[0]
 
-    // === PROFESSIONAL ===
+            const res = await fetch(`${process.env.BACKEND_API_URL || 'https://api.healthviatech.website'}/api/auth/register/doctor`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                firstName,
+                lastName,
+                email: data.email,
+                password: data.password,
+                phone: data.phone,
+                role: 'DOCTOR',
+                gdprConsent: true,
+                birthPlace: 'Turkey',
+                diplomaNumber: data.diplomaNumber,
+                medicalLicenseNumber: data.medicalLicenseNumber,
+                medicalSchool: data.medicalSchool || 'Belirtilmedi',
+                graduationYear: data.graduationYear || 2010,
+                primarySpecialty: data.primarySpecialty,
+                yearsOfExperience: data.experience || 5,
+                currentHospital: data.hospitalName,
+              }),
+            })
+
+            const result = await res.json()
+            
+            if (result.success && result.data?.userId) {
+              data.backendDoctorId = result.data.userId
+              console.log(`✅ Doctor synced: ${data.fullName} → ${result.data.userId}`)
+            } else {
+              console.error(`❌ Sync failed:`, JSON.stringify(result))
+            }
+          } catch (err) {
+            console.error(`❌ Sync error:`, err)
+          }
+        }
+        return data
+      },
+    ],
+  },
+  fields: [
     {
-      name: 'specialty',
-      type: 'relationship',
-      relationTo: 'treatment-categories',
-      hasMany: true,
-      label: 'Specialties',
-      admin: { description: 'Link to treatment categories this doctor performs' },
-    },
-    {
-      name: 'specialtyText',
-      type: 'text',
-      label: 'Specialty (Display)',
-      admin: { description: 'e.g. "Orthopedic Surgeon", "Cardiologist" — shown on cards' },
-    },
-    {
-      name: 'experience',
-      type: 'number',
-      label: 'Years of Experience',
-      min: 0,
-      admin: { position: 'sidebar' },
-    },
-    {
-      name: 'education',
-      type: 'array',
-      label: 'Education & Certifications',
+      type: 'row',
       fields: [
-        { name: 'degree', type: 'text', required: true, label: 'Degree / Certificate' },
-        { name: 'institution', type: 'text', required: true, label: 'University / Institution' },
-        { name: 'year', type: 'number', label: 'Year' },
+        {
+          name: 'title',
+          type: 'select',
+          required: true,
+          label: 'Unvan',
+          options: [
+            { label: 'Prof. Dr.', value: 'prof-dr' },
+            { label: 'Doç. Dr.', value: 'doc-dr' },
+            { label: 'Op. Dr.', value: 'op-dr' },
+            { label: 'Uzm. Dr.', value: 'uzm-dr' },
+            { label: 'Dr.', value: 'dr' },
+          ],
+          defaultValue: 'uzm-dr',
+        },
+        { name: 'fullName', type: 'text', required: true, label: 'Ad Soyad' },
       ],
     },
+    {
+      type: 'row',
+      fields: [
+        { name: 'email', type: 'email', required: true, unique: true, label: 'Email' },
+        { name: 'phone', type: 'text', required: true, unique: true, label: 'Telefon' },
+      ],
+    },
+    { name: 'password', type: 'text', required: true, label: 'Şifre' },
+    {
+      type: 'row',
+      fields: [
+        { name: 'diplomaNumber', type: 'text', required: true, unique: true, label: 'Diploma No' },
+        { name: 'medicalLicenseNumber', type: 'text', required: true, unique: true, label: 'Sicil No' },
+      ],
+    },
+    {
+      type: 'row',
+      fields: [
+        { name: 'medicalSchool', type: 'text', label: 'Tıp Fakültesi' },
+        { name: 'graduationYear', type: 'number', label: 'Mezuniyet Yılı' },
+      ],
+    },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'primarySpecialty',
+          type: 'select',
+          required: true,
+          label: 'Uzmanlık',
+          options: [
+            { label: 'Ortopedi', value: 'ORTHOPEDICS' },
+            { label: 'Kardiyoloji', value: 'CARDIOLOGY' },
+            { label: 'Göz Hastalıkları', value: 'OPHTHALMOLOGY' },
+            { label: 'Diş Hekimliği', value: 'DENTISTRY' },
+            { label: 'Plastik Cerrahi', value: 'PLASTIC_SURGERY' },
+            { label: 'Saç Ekimi', value: 'HAIR_TRANSPLANT' },
+            { label: 'Bariatrik Cerrahi', value: 'BARIATRIC_SURGERY' },
+            { label: 'Dermatoloji', value: 'DERMATOLOGY' },
+          ],
+        },
+        { name: 'experience', type: 'number', label: 'Deneyim (Yıl)' },
+      ],
+    },
+    {
+      type: 'row',
+      fields: [
+        { name: 'hospitalName', type: 'text', required: true, label: 'Hastane' },
+        {
+          name: 'city',
+          type: 'select',
+          label: 'Şehir',
+          defaultValue: 'Istanbul',
+          options: [
+            { label: 'İstanbul', value: 'Istanbul' },
+            { label: 'Ankara', value: 'Ankara' },
+            { label: 'İzmir', value: 'Izmir' },
+            { label: 'Antalya', value: 'Antalya' },
+          ],
+        },
+      ],
+    },
+    { name: 'profilePhoto', type: 'upload', relationTo: 'media', label: 'Fotoğraf' },
+    { name: 'profilePhotoUrl', type: 'text', label: 'Profil Fotoğrafı URL' },
+    { name: 'shortBio', type: 'textarea', label: 'Kısa Bio', maxLength: 300 },
     {
       name: 'languages',
       type: 'select',
       hasMany: true,
-      label: 'Languages',
+      label: 'Diller',
+      defaultValue: ['tr'],
       options: [
-        { label: 'Turkish', value: 'tr' },
-        { label: 'English', value: 'en' },
-        { label: 'German', value: 'de' },
-        { label: 'Arabic', value: 'ar' },
-        { label: 'French', value: 'fr' },
-        { label: 'Russian', value: 'ru' },
-        { label: 'Spanish', value: 'es' },
-        { label: 'Dutch', value: 'nl' },
-      ],
-      admin: { position: 'sidebar' },
-    },
-
-    // === HOSPITAL / CLINIC ===
-    {
-      name: 'hospital',
-      type: 'relationship',
-      relationTo: 'partners',
-      label: 'Hospital / Clinic',
-      admin: { description: 'Where this doctor practices' },
-    },
-    { name: 'hospitalName', type: 'text', label: 'Hospital Name (Manual)', admin: { description: 'Use if hospital is not in Partners list' } },
-    { name: 'city', type: 'text', label: 'City', admin: { position: 'sidebar' } },
-
-    // === MEDIA ===
-    { name: 'profilePhoto', type: 'upload', relationTo: 'media', label: 'Profile Photo' },
-    {
-      name: 'gallery',
-      type: 'array',
-      label: 'Gallery',
-      fields: [
-        { name: 'image', type: 'upload', relationTo: 'media', required: true },
-        { name: 'caption', type: 'text' },
+        { label: 'Türkçe', value: 'tr' },
+        { label: 'İngilizce', value: 'en' },
+        { label: 'Almanca', value: 'de' },
+        { label: 'Arapça', value: 'ar' },
+        { label: 'Rusça', value: 'ru' },
       ],
     },
-
-    // === BIO & CONTENT ===
-    {
-      name: 'shortBio',
-      type: 'textarea',
-      label: 'Short Bio',
-      maxLength: 300,
-      admin: { description: 'Shown on doctor cards' },
-    },
-    {
-      name: 'biography',
-      type: 'richText',
-      label: 'Full Biography',
-    },
-
-    // === PRICING ===
-    {
-      name: 'consultationFee',
-      type: 'number',
-      label: 'Consultation Fee ($)',
-      min: 0,
-      admin: { position: 'sidebar' },
-    },
-    {
-      name: 'consultationTypes',
-      type: 'select',
-      hasMany: true,
-      label: 'Consultation Types',
-      options: [
-        { label: 'In-Person', value: 'in-person' },
-        { label: 'Video Call', value: 'video' },
-        { label: 'Phone', value: 'phone' },
-        { label: 'Chat', value: 'chat' },
-      ],
-    },
-
-    // === RATINGS ===
-    {
-      name: 'ratings',
-      type: 'group',
-      label: 'Ratings',
-      admin: { description: 'Patient satisfaction data' },
-      fields: [
-        { name: 'overall', type: 'number', label: 'Overall Rating', min: 0, max: 5 },
-        { name: 'reviewCount', type: 'number', label: 'Number of Reviews' },
-        { name: 'successRate', type: 'text', label: 'Success Rate', admin: { description: 'e.g. "98%"' } },
-        { name: 'patientsServed', type: 'text', label: 'Total Patients', admin: { description: 'e.g. "2,500+"' } },
-      ],
-    },
-
-    // === SPRING BOOT LINK ===
-    {
-      name: 'backendDoctorId',
-      type: 'text',
-      label: 'Backend Doctor ID',
-      admin: {
-        position: 'sidebar',
-        description: 'MongoDB _id from Spring Boot doctors collection. Links this profile to the operational doctor record.',
-      },
-    },
-
-    // === FLAGS ===
-    { name: 'isActive', type: 'checkbox', label: 'Active', defaultValue: true, admin: { position: 'sidebar' } },
-    { name: 'isFeatured', type: 'checkbox', label: 'Featured', defaultValue: false, admin: { position: 'sidebar', description: 'Show on homepage?' } },
-    { name: 'availableForOnline', type: 'checkbox', label: 'Available for Online Consultation', defaultValue: false, admin: { position: 'sidebar' } },
-    { name: 'order', type: 'number', label: 'Sort Order', defaultValue: 0, admin: { position: 'sidebar' } },
-
-    ...seoFields,
+    { name: 'consultationFee', type: 'number', label: 'Muayene Ücreti ($)' },
+    { name: 'rating', type: 'number', label: 'Puan', min: 0, max: 5 },
+    { name: 'reviewCount', type: 'number', label: 'Değerlendirme Sayısı' },
+    { name: 'backendDoctorId', type: 'text', label: 'Backend ID', admin: { position: 'sidebar', readOnly: true } },
+    { name: 'isActive', type: 'checkbox', label: 'Aktif', defaultValue: true, admin: { position: 'sidebar' } },
+    { name: 'isFeatured', type: 'checkbox', label: 'Öne Çıkan', defaultValue: false, admin: { position: 'sidebar' } },
+    { name: 'availableForOnline', type: 'checkbox', label: 'Online', defaultValue: true, admin: { position: 'sidebar' } },
   ],
 }

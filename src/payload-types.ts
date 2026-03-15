@@ -70,12 +70,11 @@ export interface Config {
     users: User;
     media: Media;
     'doctor-profiles': DoctorProfile;
-    appointments: Appointment;
+    packages: Package;
     'treatment-categories': TreatmentCategory;
     partners: Partner;
     hotels: Hotel;
     flights: Flight;
-    pages: Page;
     'blog-posts': BlogPost;
     testimonials: Testimonial;
     faqs: Faq;
@@ -89,12 +88,11 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     'doctor-profiles': DoctorProfilesSelect<false> | DoctorProfilesSelect<true>;
-    appointments: AppointmentsSelect<false> | AppointmentsSelect<true>;
+    packages: PackagesSelect<false> | PackagesSelect<true>;
     'treatment-categories': TreatmentCategoriesSelect<false> | TreatmentCategoriesSelect<true>;
     partners: PartnersSelect<false> | PartnersSelect<true>;
     hotels: HotelsSelect<false> | HotelsSelect<true>;
     flights: FlightsSelect<false> | FlightsSelect<true>;
-    pages: PagesSelect<false> | PagesSelect<true>;
     'blog-posts': BlogPostsSelect<false> | BlogPostsSelect<true>;
     testimonials: TestimonialsSelect<false> | TestimonialsSelect<true>;
     faqs: FaqsSelect<false> | FaqsSelect<true>;
@@ -109,20 +107,15 @@ export interface Config {
   fallbackLocale: null;
   globals: {
     'site-settings': SiteSetting;
-    header: Header;
-    footer: Footer;
-    homepage: Homepage;
   };
   globalsSelect: {
     'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
-    header: HeaderSelect<false> | HeaderSelect<true>;
-    footer: FooterSelect<false> | FooterSelect<true>;
-    homepage: HomepageSelect<false> | HomepageSelect<true>;
   };
   locale: null;
-  user: User & {
-    collection: 'users';
+  widgets: {
+    collections: CollectionsWidget;
   };
+  user: User;
   jobs: {
     tasks: unknown;
     workflows: unknown;
@@ -173,6 +166,7 @@ export interface User {
       }[]
     | null;
   password?: string | null;
+  collection: 'users';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -194,7 +188,7 @@ export interface Media {
   focalY?: number | null;
 }
 /**
- * Doctor profiles displayed on the patient-facing website
+ * Doktor yönetimi - Backend API ile senkronize çalışır
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "doctor-profiles".
@@ -204,51 +198,75 @@ export interface DoctorProfile {
   title: 'prof-dr' | 'doc-dr' | 'op-dr' | 'uzm-dr' | 'dr';
   fullName: string;
   /**
-   * Auto-generated from "fullName". Can also be edited manually.
+   * Doktor giriş yapacağı email
    */
-  slug?: string | null;
   email: string;
+  /**
+   * +905xxxxxxxxx formatında
+   */
   phone?: string | null;
   /**
-   * Link to treatment categories this doctor performs
+   * Min 8 karakter, büyük/küçük harf, rakam ve özel karakter içermeli
    */
-  specialty?: (string | TreatmentCategory)[] | null;
-  /**
-   * e.g. "Orthopedic Surgeon", "Cardiologist" — shown on cards
-   */
-  specialtyText?: string | null;
+  password?: string | null;
+  diplomaNumber: string;
+  medicalLicenseNumber: string;
+  medicalSchool?: string | null;
+  graduationYear?: number | null;
+  primarySpecialty:
+    | 'ORTHOPEDICS'
+    | 'CARDIOLOGY'
+    | 'OPHTHALMOLOGY'
+    | 'DENTISTRY'
+    | 'PLASTIC_SURGERY'
+    | 'HAIR_TRANSPLANT'
+    | 'BARIATRIC_SURGERY'
+    | 'DERMATOLOGY'
+    | 'NEUROLOGY'
+    | 'UROLOGY'
+    | 'GYNECOLOGY'
+    | 'GENERAL_SURGERY'
+    | 'INTERNAL_MEDICINE';
   experience?: number | null;
-  education?:
-    | {
-        degree: string;
-        institution: string;
-        year?: number | null;
-        id?: string | null;
-      }[]
-    | null;
-  languages?: ('tr' | 'en' | 'de' | 'ar' | 'fr' | 'ru' | 'es' | 'nl')[] | null;
-  /**
-   * Where this doctor practices
-   */
-  hospital?: (string | null) | Partner;
-  /**
-   * Use if hospital is not in Partners list
-   */
-  hospitalName?: string | null;
-  city?: string | null;
+  hospitalName: string;
+  city?: ('Istanbul' | 'Ankara' | 'Izmir' | 'Antalya' | 'Bursa' | 'Konya') | null;
   profilePhoto?: (string | null) | Media;
-  gallery?:
-    | {
-        image: string | Media;
-        caption?: string | null;
-        id?: string | null;
-      }[]
-    | null;
   /**
-   * Shown on doctor cards
+   * Doktor kartlarında görünecek kısa tanıtım
    */
   shortBio?: string | null;
-  biography?: {
+  languages?: ('tr' | 'en' | 'de' | 'ar' | 'ru' | 'fr')[] | null;
+  consultationFee?: number | null;
+  rating?: number | null;
+  reviewCount?: number | null;
+  /**
+   * Backend API tarafından otomatik atanır
+   */
+  backendDoctorId?: string | null;
+  isActive?: boolean | null;
+  isFeatured?: boolean | null;
+  availableForOnline?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Medical tourism packages displayed on the frontend
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "packages".
+ */
+export interface Package {
+  id: string;
+  name: string;
+  /**
+   * Auto-generated from "name". Can also be edited manually.
+   */
+  slug?: string | null;
+  /**
+   * Shown on package cards
+   */
+  description: string;
+  fullDescription?: {
     root: {
       type: string;
       children: {
@@ -263,33 +281,96 @@ export interface DoctorProfile {
     };
     [k: string]: unknown;
   } | null;
-  consultationFee?: number | null;
-  consultationTypes?: ('in-person' | 'video' | 'phone' | 'chat')[] | null;
+  category:
+    | 'orthopedics'
+    | 'surgery'
+    | 'ophthalmology'
+    | 'dermatology'
+    | 'cardiology'
+    | 'hair'
+    | 'dental'
+    | 'bariatric'
+    | 'ivf'
+    | 'checkup';
   /**
-   * Patient satisfaction data
+   * Link to detailed treatment category
    */
-  ratings?: {
-    overall?: number | null;
-    reviewCount?: number | null;
+  treatmentCategory?: (string | null) | TreatmentCategory;
+  price: number;
+  /**
+   * For showing discount (crossed out price)
+   */
+  originalPrice?: number | null;
+  currency?: ('USD' | 'EUR' | 'GBP') | null;
+  durationNights: number;
+  durationDays: number;
+  /**
+   * Auto-generated: "5 Nights / 6 Days"
+   */
+  duration?: string | null;
+  coverImage: string | Media;
+  gallery?:
+    | {
+        image: string | Media;
+        caption?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  includes: {
+    title: string;
+    description?: string | null;
+    icon?: ('check' | 'medical' | 'hotel' | 'transfer' | 'flight' | 'doctor') | null;
+    id?: string | null;
+  }[];
+  excludes?:
+    | {
+        item: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Day-by-day journey
+   */
+  process?:
+    | {
+        /**
+         * e.g. "1. Gün", "Day 1-2"
+         */
+        day: string;
+        title: string;
+        description?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  relatedDoctors?: (string | DoctorProfile)[] | null;
+  recommendedHotels?: (string | Hotel)[] | null;
+  transport?: {
+    hotelIncluded?: boolean | null;
     /**
-     * e.g. "98%"
+     * e.g. "5 Nights, 5-star hotel near hospital"
      */
-    successRate?: string | null;
+    hotelDescription?: string | null;
+    flightOption?: ('not-included' | 'included' | 'customizable') | null;
     /**
-     * e.g. "2,500+"
+     * e.g. "Economy class, round-trip ticket"
      */
-    patientsServed?: string | null;
+    flightDescription?: string | null;
+    transferIncluded?: boolean | null;
+    /**
+     * e.g. "Airport to hotel/hospital, private vehicle"
+     */
+    transferDescription?: string | null;
   };
-  /**
-   * MongoDB _id from Spring Boot doctors collection. Links this profile to the operational doctor record.
-   */
-  backendDoctorId?: string | null;
-  isActive?: boolean | null;
-  /**
-   * Show on homepage?
-   */
+  faqs?:
+    | {
+        question: string;
+        answer: string;
+        id?: string | null;
+      }[]
+    | null;
+  isPopular?: boolean | null;
   isFeatured?: boolean | null;
-  availableForOnline?: boolean | null;
+  isActive?: boolean | null;
   order?: number | null;
   /**
    * Search engine optimization settings
@@ -465,85 +546,6 @@ export interface TreatmentCategory {
   _status?: ('draft' | 'published') | null;
 }
 /**
- * Partner hospitals, clinics, and healthcare institutions
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "partners".
- */
-export interface Partner {
-  id: string;
-  name: string;
-  /**
-   * Auto-generated from "name". Can also be edited manually.
-   */
-  slug?: string | null;
-  type: 'hospital' | 'clinic' | 'medical-center' | 'laboratory' | 'hotel';
-  logo?: (string | null) | Media;
-  coverImage?: (string | null) | Media;
-  description?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
-  shortDescription?: string | null;
-  location: {
-    city: string;
-    district?: string | null;
-    address?: string | null;
-    mapUrl?: string | null;
-  };
-  contact?: {
-    phone?: string | null;
-    email?: string | null;
-    website?: string | null;
-  };
-  accreditations?:
-    | {
-        /**
-         * e.g. "JCI", "ISO 9001", "TÜV"
-         */
-        name: string;
-        logo?: (string | null) | Media;
-        id?: string | null;
-      }[]
-    | null;
-  specialties?: (string | TreatmentCategory)[] | null;
-  isActive?: boolean | null;
-  isFeatured?: boolean | null;
-  order?: number | null;
-  updatedAt: string;
-  createdAt: string;
-  _status?: ('draft' | 'published') | null;
-}
-/**
- * Quick appointment overview (operational data lives in Spring Boot)
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "appointments".
- */
-export interface Appointment {
-  id: string;
-  patientName: string;
-  patientEmail: string;
-  patientPhone: string;
-  doctor: string | DoctorProfile;
-  appointmentDate: string;
-  status?: ('PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED') | null;
-  notes?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
  * Partner hotels and accommodations for medical tourists
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -699,6 +701,67 @@ export interface Hotel {
   _status?: ('draft' | 'published') | null;
 }
 /**
+ * Partner hospitals, clinics, and healthcare institutions
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partners".
+ */
+export interface Partner {
+  id: string;
+  name: string;
+  /**
+   * Auto-generated from "name". Can also be edited manually.
+   */
+  slug?: string | null;
+  type: 'hospital' | 'clinic' | 'medical-center' | 'laboratory' | 'hotel';
+  logo?: (string | null) | Media;
+  coverImage?: (string | null) | Media;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  shortDescription?: string | null;
+  location: {
+    city: string;
+    district?: string | null;
+    address?: string | null;
+    mapUrl?: string | null;
+  };
+  contact?: {
+    phone?: string | null;
+    email?: string | null;
+    website?: string | null;
+  };
+  accreditations?:
+    | {
+        /**
+         * e.g. "JCI", "ISO 9001", "TÜV"
+         */
+        name: string;
+        logo?: (string | null) | Media;
+        id?: string | null;
+      }[]
+    | null;
+  specialties?: (string | TreatmentCategory)[] | null;
+  isActive?: boolean | null;
+  isFeatured?: boolean | null;
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
  * Flight options and routes for medical tourists
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -780,67 +843,6 @@ export interface Flight {
   order?: number | null;
   updatedAt: string;
   createdAt: string;
-}
-/**
- * Static pages (About, Contact, Privacy Policy, etc.)
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "pages".
- */
-export interface Page {
-  id: string;
-  title: string;
-  /**
-   * Auto-generated from "title". Can also be edited manually.
-   */
-  slug?: string | null;
-  content: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  };
-  heroImage?: (string | null) | Media;
-  template?: ('default' | 'full-width' | 'with-sidebar' | 'contact' | 'legal') | null;
-  publishedAt?: string | null;
-  /**
-   * For menu ordering (ascending)
-   */
-  order?: number | null;
-  /**
-   * Search engine optimization settings
-   */
-  meta?: {
-    /**
-     * Page title (60 characters recommended). Falls back to main title if empty.
-     */
-    title?: string | null;
-    /**
-     * Description shown in search results (155 characters recommended).
-     */
-    description?: string | null;
-    /**
-     * Comma-separated keywords
-     */
-    keywords?: string | null;
-    /**
-     * Image for social media sharing (1200x630 recommended)
-     */
-    image?: (string | null) | Media;
-    noIndex?: boolean | null;
-  };
-  updatedAt: string;
-  createdAt: string;
-  _status?: ('draft' | 'published') | null;
 }
 /**
  * Blog articles for SEO and content marketing
@@ -1037,8 +1039,8 @@ export interface PayloadLockedDocument {
         value: string | DoctorProfile;
       } | null)
     | ({
-        relationTo: 'appointments';
-        value: string | Appointment;
+        relationTo: 'packages';
+        value: string | Package;
       } | null)
     | ({
         relationTo: 'treatment-categories';
@@ -1055,10 +1057,6 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'flights';
         value: string | Flight;
-      } | null)
-    | ({
-        relationTo: 'pages';
-        value: string | Page;
       } | null)
     | ({
         relationTo: 'blog-posts';
@@ -1165,25 +1163,48 @@ export interface MediaSelect<T extends boolean = true> {
 export interface DoctorProfilesSelect<T extends boolean = true> {
   title?: T;
   fullName?: T;
-  slug?: T;
   email?: T;
   phone?: T;
-  specialty?: T;
-  specialtyText?: T;
+  password?: T;
+  diplomaNumber?: T;
+  medicalLicenseNumber?: T;
+  medicalSchool?: T;
+  graduationYear?: T;
+  primarySpecialty?: T;
   experience?: T;
-  education?:
-    | T
-    | {
-        degree?: T;
-        institution?: T;
-        year?: T;
-        id?: T;
-      };
-  languages?: T;
-  hospital?: T;
   hospitalName?: T;
   city?: T;
   profilePhoto?: T;
+  shortBio?: T;
+  languages?: T;
+  consultationFee?: T;
+  rating?: T;
+  reviewCount?: T;
+  backendDoctorId?: T;
+  isActive?: T;
+  isFeatured?: T;
+  availableForOnline?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "packages_select".
+ */
+export interface PackagesSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  description?: T;
+  fullDescription?: T;
+  category?: T;
+  treatmentCategory?: T;
+  price?: T;
+  originalPrice?: T;
+  currency?: T;
+  durationNights?: T;
+  durationDays?: T;
+  duration?: T;
+  coverImage?: T;
   gallery?:
     | T
     | {
@@ -1191,22 +1212,50 @@ export interface DoctorProfilesSelect<T extends boolean = true> {
         caption?: T;
         id?: T;
       };
-  shortBio?: T;
-  biography?: T;
-  consultationFee?: T;
-  consultationTypes?: T;
-  ratings?:
+  includes?:
     | T
     | {
-        overall?: T;
-        reviewCount?: T;
-        successRate?: T;
-        patientsServed?: T;
+        title?: T;
+        description?: T;
+        icon?: T;
+        id?: T;
       };
-  backendDoctorId?: T;
-  isActive?: T;
+  excludes?:
+    | T
+    | {
+        item?: T;
+        id?: T;
+      };
+  process?:
+    | T
+    | {
+        day?: T;
+        title?: T;
+        description?: T;
+        id?: T;
+      };
+  relatedDoctors?: T;
+  recommendedHotels?: T;
+  transport?:
+    | T
+    | {
+        hotelIncluded?: T;
+        hotelDescription?: T;
+        flightOption?: T;
+        flightDescription?: T;
+        transferIncluded?: T;
+        transferDescription?: T;
+      };
+  faqs?:
+    | T
+    | {
+        question?: T;
+        answer?: T;
+        id?: T;
+      };
+  isPopular?: T;
   isFeatured?: T;
-  availableForOnline?: T;
+  isActive?: T;
   order?: T;
   meta?:
     | T
@@ -1220,21 +1269,6 @@ export interface DoctorProfilesSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "appointments_select".
- */
-export interface AppointmentsSelect<T extends boolean = true> {
-  patientName?: T;
-  patientEmail?: T;
-  patientPhone?: T;
-  doctor?: T;
-  appointmentDate?: T;
-  status?: T;
-  notes?: T;
-  updatedAt?: T;
-  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1496,31 +1530,6 @@ export interface FlightsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "pages_select".
- */
-export interface PagesSelect<T extends boolean = true> {
-  title?: T;
-  slug?: T;
-  content?: T;
-  heroImage?: T;
-  template?: T;
-  publishedAt?: T;
-  order?: T;
-  meta?:
-    | T
-    | {
-        title?: T;
-        description?: T;
-        keywords?: T;
-        image?: T;
-        noIndex?: T;
-      };
-  updatedAt?: T;
-  createdAt?: T;
-  _status?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "blog-posts_select".
  */
 export interface BlogPostsSelect<T extends boolean = true> {
@@ -1695,191 +1704,6 @@ export interface SiteSetting {
   createdAt?: string | null;
 }
 /**
- * Top menu and navigation links
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "header".
- */
-export interface Header {
-  id: string;
-  navItems?:
-    | {
-        label: string;
-        type: 'internal' | 'external' | 'custom';
-        page?: (string | null) | Page;
-        url?: string | null;
-        openInNewTab?: boolean | null;
-        children?:
-          | {
-              label: string;
-              type: 'internal' | 'external' | 'custom';
-              page?: (string | null) | Page;
-              url?: string | null;
-              /**
-               * Short description for mega menu
-               */
-              description?: string | null;
-              /**
-               * Lucide icon name
-               */
-              icon?: string | null;
-              id?: string | null;
-            }[]
-          | null;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * Action button on the top right (e.g. "Get Free Consultation")
-   */
-  ctaButton?: {
-    label?: string | null;
-    url?: string | null;
-    isVisible?: boolean | null;
-  };
-  showLanguageSwitcher?: boolean | null;
-  updatedAt?: string | null;
-  createdAt?: string | null;
-}
-/**
- * Footer area — links, contact summary, legal
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "footer".
- */
-export interface Footer {
-  id: string;
-  columns?:
-    | {
-        title: string;
-        links?:
-          | {
-              label: string;
-              type?: ('internal' | 'custom') | null;
-              page?: (string | null) | Page;
-              url?: string | null;
-              id?: string | null;
-            }[]
-          | null;
-        id?: string | null;
-      }[]
-    | null;
-  bottomBar?: {
-    copyright?: string | null;
-    legalLinks?:
-      | {
-          label: string;
-          page?: (string | null) | Page;
-          id?: string | null;
-        }[]
-      | null;
-  };
-  newsletter?: {
-    isEnabled?: boolean | null;
-    title?: string | null;
-    description?: string | null;
-  };
-  updatedAt?: string | null;
-  createdAt?: string | null;
-}
-/**
- * Homepage sections — Hero, features, stats, CTA
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "homepage".
- */
-export interface Homepage {
-  id: string;
-  hero: {
-    title: string;
-    subtitle?: string | null;
-    backgroundImage?: (string | null) | Media;
-    /**
-     * Video to play in hero area (optional)
-     */
-    backgroundVideo?: string | null;
-    primaryCta?: {
-      label?: string | null;
-      url?: string | null;
-    };
-    secondaryCta?: {
-      label?: string | null;
-      url?: string | null;
-    };
-  };
-  /**
-   * Key numbers (e.g. "10,000+ Patients", "50+ Doctors")
-   */
-  stats?:
-    | {
-        /**
-         * e.g. "10,000+", "98%"
-         */
-        value: string;
-        /**
-         * e.g. "Happy Patients", "Success Rate"
-         */
-        label: string;
-        /**
-         * Lucide icon name
-         */
-        icon?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  howItWorks?: {
-    title?: string | null;
-    subtitle?: string | null;
-    steps?:
-      | {
-          step: number;
-          title: string;
-          description?: string | null;
-          icon?: string | null;
-          id?: string | null;
-        }[]
-      | null;
-  };
-  featuredTreatments?: {
-    title?: string | null;
-    subtitle?: string | null;
-    /**
-     * Select treatments to display on homepage (max 6)
-     */
-    treatments?: (string | TreatmentCategory)[] | null;
-  };
-  whyUs?: {
-    title?: string | null;
-    features?:
-      | {
-          title: string;
-          description?: string | null;
-          icon?: string | null;
-          id?: string | null;
-        }[]
-      | null;
-  };
-  testimonialSection?: {
-    title?: string | null;
-    subtitle?: string | null;
-    displayMode?: ('featured' | 'manual' | 'latest') | null;
-    selectedTestimonials?: (string | Testimonial)[] | null;
-  };
-  partnerSection?: {
-    title?: string | null;
-    isVisible?: boolean | null;
-  };
-  bottomCta?: {
-    title?: string | null;
-    description?: string | null;
-    ctaLabel?: string | null;
-    ctaUrl?: string | null;
-    backgroundImage?: (string | null) | Media;
-  };
-  updatedAt?: string | null;
-  createdAt?: string | null;
-}
-/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-settings_select".
  */
@@ -1941,179 +1765,13 @@ export interface SiteSettingsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "header_select".
+ * via the `definition` "collections_widget".
  */
-export interface HeaderSelect<T extends boolean = true> {
-  navItems?:
-    | T
-    | {
-        label?: T;
-        type?: T;
-        page?: T;
-        url?: T;
-        openInNewTab?: T;
-        children?:
-          | T
-          | {
-              label?: T;
-              type?: T;
-              page?: T;
-              url?: T;
-              description?: T;
-              icon?: T;
-              id?: T;
-            };
-        id?: T;
-      };
-  ctaButton?:
-    | T
-    | {
-        label?: T;
-        url?: T;
-        isVisible?: T;
-      };
-  showLanguageSwitcher?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  globalType?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "footer_select".
- */
-export interface FooterSelect<T extends boolean = true> {
-  columns?:
-    | T
-    | {
-        title?: T;
-        links?:
-          | T
-          | {
-              label?: T;
-              type?: T;
-              page?: T;
-              url?: T;
-              id?: T;
-            };
-        id?: T;
-      };
-  bottomBar?:
-    | T
-    | {
-        copyright?: T;
-        legalLinks?:
-          | T
-          | {
-              label?: T;
-              page?: T;
-              id?: T;
-            };
-      };
-  newsletter?:
-    | T
-    | {
-        isEnabled?: T;
-        title?: T;
-        description?: T;
-      };
-  updatedAt?: T;
-  createdAt?: T;
-  globalType?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "homepage_select".
- */
-export interface HomepageSelect<T extends boolean = true> {
-  hero?:
-    | T
-    | {
-        title?: T;
-        subtitle?: T;
-        backgroundImage?: T;
-        backgroundVideo?: T;
-        primaryCta?:
-          | T
-          | {
-              label?: T;
-              url?: T;
-            };
-        secondaryCta?:
-          | T
-          | {
-              label?: T;
-              url?: T;
-            };
-      };
-  stats?:
-    | T
-    | {
-        value?: T;
-        label?: T;
-        icon?: T;
-        id?: T;
-      };
-  howItWorks?:
-    | T
-    | {
-        title?: T;
-        subtitle?: T;
-        steps?:
-          | T
-          | {
-              step?: T;
-              title?: T;
-              description?: T;
-              icon?: T;
-              id?: T;
-            };
-      };
-  featuredTreatments?:
-    | T
-    | {
-        title?: T;
-        subtitle?: T;
-        treatments?: T;
-      };
-  whyUs?:
-    | T
-    | {
-        title?: T;
-        features?:
-          | T
-          | {
-              title?: T;
-              description?: T;
-              icon?: T;
-              id?: T;
-            };
-      };
-  testimonialSection?:
-    | T
-    | {
-        title?: T;
-        subtitle?: T;
-        displayMode?: T;
-        selectedTestimonials?: T;
-      };
-  partnerSection?:
-    | T
-    | {
-        title?: T;
-        isVisible?: T;
-      };
-  bottomCta?:
-    | T
-    | {
-        title?: T;
-        description?: T;
-        ctaLabel?: T;
-        ctaUrl?: T;
-        backgroundImage?: T;
-      };
-  updatedAt?: T;
-  createdAt?: T;
-  globalType?: T;
+export interface CollectionsWidget {
+  data?: {
+    [k: string]: unknown;
+  };
+  width: 'full';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
