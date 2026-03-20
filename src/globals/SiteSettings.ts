@@ -73,6 +73,22 @@ export const SiteSettings: GlobalConfig = {
       ],
     },
     {
+      name: 'facilityImages',
+      type: 'array',
+      label: 'Facility Gallery (About Page)',
+      minRows: 0,
+      maxRows: 8,
+      fields: [
+        { name: 'image', type: 'upload', relationTo: 'media', required: true },
+        {
+          name: 'caption',
+          type: 'text',
+          required: true,
+          admin: { description: 'e.g. Laboratory, Operating Room, Patient Suite' },
+        },
+      ],
+    },
+    {
       name: 'analytics',
       type: 'group',
       label: 'Analytics & Integrations',
