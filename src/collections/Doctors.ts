@@ -66,6 +66,13 @@ export const Doctors: CollectionConfig = {
         if (operation === 'update' && doc.backendDoctorId) {
           try {
             const backendUrl = process.env.BACKEND_API_URL || 'https://api.healthviatech.website'
+            const apiKey = process.env.PAYLOAD_SYNC_API_KEY || ''
+
+            if (!apiKey) {
+              console.error('❌ PAYLOAD_SYNC_API_KEY env var not set — skipping backend sync')
+              return
+            }
+
             const params = new URLSearchParams()
 
             if (doc.hospitalName) params.set('hospitalName', doc.hospitalName)
@@ -75,7 +82,13 @@ export const Doctors: CollectionConfig = {
 
             const res = await fetch(
               `${backendUrl}/api/doctors/${doc.backendDoctorId}/sync?${params.toString()}`,
-              { method: 'PATCH', headers: { 'Content-Type': 'application/json' } },
+              {
+                method: 'PATCH',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-Payload-API-Key': apiKey,
+                },
+              },
             )
 
             if (res.ok) {
