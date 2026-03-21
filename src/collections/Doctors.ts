@@ -46,7 +46,7 @@ export const Doctors: CollectionConfig = {
             })
 
             const result = await res.json()
-            
+
             if (result.success && result.data?.userId) {
               data.backendDoctorId = result.data.userId
               console.log(`✅ Doctor synced: ${data.fullName} → ${result.data.userId}`)
@@ -58,6 +58,36 @@ export const Doctors: CollectionConfig = {
           }
         }
         return data
+      },
+    ],
+    afterChange: [
+      async ({ doc, operation }) => {
+        // Sync updates to backend when doctor is edited (not on initial create — that's handled by beforeChange)
+        if (operation === 'update' && doc.backendDoctorId) {
+          try {
+            const backendUrl = process.env.BACKEND_API_URL || 'https://api.healthviatech.website'
+            const params = new URLSearchParams()
+
+            if (doc.hospitalName) params.set('hospitalName', doc.hospitalName)
+            if (doc.primarySpecialty) params.set('primarySpecialty', doc.primarySpecialty)
+            if (doc.shortBio) params.set('shortBio', doc.shortBio)
+            if (doc.experience) params.set('yearsOfExperience', String(doc.experience))
+
+            const res = await fetch(
+              `${backendUrl}/api/doctors/${doc.backendDoctorId}/sync?${params.toString()}`,
+              { method: 'PATCH', headers: { 'Content-Type': 'application/json' } },
+            )
+
+            if (res.ok) {
+              console.log(`✅ Doctor update synced: ${doc.fullName} → backend`)
+            } else {
+              const errorText = await res.text()
+              console.error(`❌ Doctor update sync failed (${res.status}):`, errorText)
+            }
+          } catch (err) {
+            console.error(`❌ Doctor update sync error:`, err)
+          }
+        }
       },
     ],
   },

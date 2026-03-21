@@ -5,7 +5,7 @@ export const Appointments: CollectionConfig = {
   slug: 'appointments',
   admin: {
     useAsTitle: 'patientName',
-    defaultColumns: ['patientName', 'doctor', 'appointmentDate', 'status'],
+    defaultColumns: ['patientName', 'doctor', 'appointmentDate', 'consultationType', 'status'],
     group: 'Appointment Management',
     description: 'Quick appointment overview (operational data lives in Spring Boot)',
   },
@@ -26,6 +26,17 @@ export const Appointments: CollectionConfig = {
       required: true,
       label: 'Date & Time',
       admin: { date: { pickerAppearance: 'dayAndTime' } },
+    },
+    {
+      name: 'consultationType',
+      type: 'select',
+      defaultValue: 'IN_PERSON',
+      label: 'Consultation Type',
+      options: [
+        { label: 'In Person', value: 'IN_PERSON' },
+        { label: 'Video Call (Online)', value: 'VIDEO_CALL' },
+        { label: 'Phone Call', value: 'PHONE_CALL' },
+      ],
     },
     {
       name: 'status',
