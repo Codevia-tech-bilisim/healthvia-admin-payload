@@ -79,6 +79,10 @@ export const Doctors: CollectionConfig = {
             if (doc.primarySpecialty) params.set('primarySpecialty', doc.primarySpecialty)
             if (doc.shortBio) params.set('shortBio', doc.shortBio)
             if (doc.experience) params.set('yearsOfExperience', String(doc.experience))
+            if (doc.consultationFee != null) params.set('consultationFee', String(doc.consultationFee))
+            if (doc.rating != null) params.set('rating', String(doc.rating))
+            if (doc.reviewCount != null) params.set('reviewCount', String(doc.reviewCount))
+            if (doc.languages && doc.languages.length > 0) params.set('languages', doc.languages.join(','))
 
             const res = await fetch(
               `${backendUrl}/api/doctors/${doc.backendDoctorId}/sync?${params.toString()}`,
