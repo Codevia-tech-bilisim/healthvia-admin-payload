@@ -63,6 +63,32 @@ export const Packages: CollectionConfig = {
       label: 'Linked Treatment',
       admin: { description: 'Link to detailed treatment category' },
     },
+    {
+      name: 'specialties',
+      type: 'select',
+      hasMany: true,
+      label: 'Related Doctor Specialties',
+      admin: {
+        description: 'Select which doctor specialties are relevant to this package. Used to show related doctors on the detail page.',
+      },
+      options: [
+        { label: 'Orthopedics', value: 'ORTHOPEDICS' },
+        { label: 'Cardiology', value: 'CARDIOLOGY' },
+        { label: 'Ophthalmology', value: 'OPHTHALMOLOGY' },
+        { label: 'Dentistry', value: 'DENTISTRY' },
+        { label: 'Plastic Surgery', value: 'PLASTIC_SURGERY' },
+        { label: 'Hair Transplant', value: 'HAIR_TRANSPLANT' },
+        { label: 'Bariatric Surgery', value: 'BARIATRIC_SURGERY' },
+        { label: 'Dermatology', value: 'DERMATOLOGY' },
+      ],
+    },
+    {
+      name: 'shortDescription',
+      type: 'text',
+      label: 'Card Description',
+      maxLength: 200,
+      admin: { description: 'Short description shown on package cards (separate from the main description)' },
+    },
 
     // === PRICING ===
     {
