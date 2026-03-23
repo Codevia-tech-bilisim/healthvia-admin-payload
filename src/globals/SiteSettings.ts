@@ -89,6 +89,18 @@ export const SiteSettings: GlobalConfig = {
       ],
     },
     {
+      name: 'pageHeroes',
+      type: 'group',
+      label: 'Page Hero Images',
+      admin: { description: 'Hero/banner images for listing pages' },
+      fields: [
+        { name: 'packagesHero', type: 'upload', relationTo: 'media', label: 'Packages Page Hero' },
+        { name: 'doctorsHero', type: 'upload', relationTo: 'media', label: 'Doctors Page Hero' },
+        { name: 'hotelsHero', type: 'upload', relationTo: 'media', label: 'Hotels Page Hero' },
+        { name: 'flightsHero', type: 'upload', relationTo: 'media', label: 'Flights Page Hero' },
+      ],
+    },
+    {
       name: 'analytics',
       type: 'group',
       label: 'Analytics & Integrations',
